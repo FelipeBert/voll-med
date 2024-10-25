@@ -2,8 +2,11 @@ package org.FelipeBert.api.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.FelipeBert.api.dto.AtualizarMedicoDTO;
 import org.FelipeBert.api.dto.CadastroMedicoDTO;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "Medico")
 @Table(name = "medicos")
@@ -35,6 +38,12 @@ public class Medico {
 
     private boolean ativo;
 
+    @Column(name = "data_hora")
+    private LocalDateTime dataHora;
+
+    @OneToMany(mappedBy = "medico", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Consulta> consultas = new ArrayList<>();
+
     public Medico(CadastroMedicoDTO dados) {
         this.nome = dados.nome();
         this.email = dados.email();
@@ -43,21 +52,6 @@ public class Medico {
         this.especialidade = dados.especialidade();
         this.endereco = new Endereco(dados.endereco());
         this.ativo = true;
-    }
-
-    public void atualizarDados(AtualizarMedicoDTO dados) {
-        if(dados.nome() != null && !dados.nome().isEmpty()){
-            this.nome = dados.nome();
-        }
-        if(dados.telefone() != null && !dados.telefone().isEmpty()){
-            this.telefone = dados.telefone();
-        }
-        if(dados.endereco() != null){
-            this.endereco.atualizarDados(dados.endereco());
-        }
-    }
-
-    public void desativarUsuario() {
-        this.ativo = false;
+        this.dataHora = dados.hora();
     }
 }
