@@ -3,12 +3,15 @@ package org.FelipeBert.api.controller;
 import jakarta.validation.Valid;
 import org.FelipeBert.api.dto.AtualizarMedicoDTO;
 import org.FelipeBert.api.dto.CadastroMedicoDTO;
+import org.FelipeBert.api.dto.DadosDetalhamentoMedicoDTO;
 import org.FelipeBert.api.dto.DadosListagemMedicoDTO;
 import org.FelipeBert.api.service.MedicoService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/medicos")
@@ -21,22 +24,39 @@ public class MedicoController {
     }
 
     @PostMapping
-    public void cadastrarMedico(@RequestBody @Valid CadastroMedicoDTO dados) {
-        service.cadastrarMedico(dados);
+    public ResponseEntity cadastrarMedico(@RequestBody @Valid CadastroMedicoDTO dados, UriComponentsBuilder uriBuilder) {
+        var medico = service.cadastrarMedico(dados);
+
+        var uri = uriBuilder.path("/medicos/{id}").buildAndExpand(medico.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(new DadosDetalhamentoMedicoDTO(medico));
     }
 
     @GetMapping
-    public Page<DadosListagemMedicoDTO> listarMedicos(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao){
-        return service.listarMedicos(paginacao);
+    public ResponseEntity<Page<DadosListagemMedicoDTO>> listarMedicos(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao){
+        var page = service.listarMedicos(paginacao);
+
+        return ResponseEntity.ok(page);
     }
 
     @PutMapping
-    public void atualizarMedico(@RequestBody @Valid AtualizarMedicoDTO dados){
-        service.atualizarMedico(dados);
+    public ResponseEntity atualizarMedico(@RequestBody @Valid AtualizarMedicoDTO dados){
+        var medico = service.atualizarMedico(dados);
+
+        return ResponseEntity.ok(new DadosDetalhamentoMedicoDTO(medico));
     }
 
     @DeleteMapping("/{id}")
-    public void excluirMedico(@PathVariable Long id){
+    public ResponseEntity excluirMedico(@PathVariable Long id){
         service.excluirMedico(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity detalharMedico(@PathVariable Long id){
+        var medico = service.detalharMedico(id);
+
+        return ResponseEntity.ok(new DadosDetalhamentoMedicoDTO(medico));
     }
 }

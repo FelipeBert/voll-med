@@ -8,7 +8,9 @@ import org.FelipeBert.api.service.PacienteService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/pacientes")
@@ -21,22 +23,38 @@ public class PacienteController {
     }
 
     @PostMapping
-    public void cadastrarPaciente(@RequestBody @Valid CadastrarPacienteDTO dadosPaciente){
-        service.cadastrarPaciente(dadosPaciente);
+    public ResponseEntity cadastrarPaciente(@RequestBody @Valid CadastrarPacienteDTO dadosPaciente, UriComponentsBuilder uriBuilder){
+        var paciente = service.cadastrarPaciente(dadosPaciente);
+
+        var uri = uriBuilder.path("/pacientes/{id}").buildAndExpand(paciente.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(new DadosListagemPacienteDTO(paciente));
     }
 
     @GetMapping
-    public Page<DadosListagemPacienteDTO> listarPacientes(@PageableDefault(size = 10, sort = {"nome"}) Pageable pageable){
-        return service.listarPacientes(pageable);
+    public ResponseEntity<Page<DadosListagemPacienteDTO>> listarPacientes(@PageableDefault(size = 10, sort = {"nome"}) Pageable pageable){
+        var page = service.listarPacientes(pageable);
+        return ResponseEntity.ok(page);
     }
 
     @PutMapping
-    public void atualizarPaciente(@RequestBody @Valid AtualizarPacienteDTO dadosPaciente){
-        service.atualizarPaciente(dadosPaciente);
+    public ResponseEntity atualizarPaciente(@RequestBody @Valid AtualizarPacienteDTO dadosPaciente){
+        var paciente = service.atualizarPaciente(dadosPaciente);
+
+        return ResponseEntity.ok(new DadosListagemPacienteDTO(paciente));
     }
 
     @DeleteMapping("/{id}")
-    public void excluirPaciente(@PathVariable Long id){
+    public ResponseEntity excluirPaciente(@PathVariable Long id){
         service.excluirPaciente(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity detalharPaciente(@PathVariable Long id){
+        var paciente = service.detalharPaciente(id);
+
+        return ResponseEntity.ok(new DadosListagemPacienteDTO(paciente));
     }
 }
