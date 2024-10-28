@@ -71,16 +71,16 @@ public class ConsultaService {
     }
 
     @Transactional
-    public String cancelarConsulta(CancelarConsultaDTO dadosCancelamento) {
+    public Consulta cancelarConsulta(CancelarConsultaDTO dadosCancelamento) {
         var consulta = consultaRepository.getReferenceById(dadosCancelamento.id());
         LocalDateTime dataHoraConsulta = LocalDateTime.of(consulta.getData(), consulta.getHora());
 
         if(LocalDateTime.now().isBefore(dataHoraConsulta.minusHours(24))){
             consulta.setMarcada(false);
             consulta.setMotivoCancelamento(dadosCancelamento.motivo());
-            return "Cancelamento realizado com Sucesso";
+            return consulta;
         }
-        return "Não foi possivel cancelar a Consulta!";
+        return null;
     }
 
     private void validarDataHoraConsulta(LocalDateTime dataHora) {
@@ -118,5 +118,9 @@ public class ConsultaService {
         if (medicoOcupado) {
             throw new IllegalArgumentException("O médico já possui outra consulta agendada para este horário.");
         }
+    }
+
+    public Consulta detalharConsulta(Long id) {
+        return consultaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Consulta não Encontrada!"));
     }
 }

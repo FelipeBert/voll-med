@@ -23,26 +23,32 @@ public class MedicoService {
     }
 
     @Transactional
-    public void cadastrarMedico(CadastroMedicoDTO dados){
-        repository.save(new Medico(dados));
+    public Medico cadastrarMedico(CadastroMedicoDTO dados){
+        var medico = new Medico(dados);
+        repository.save(medico);
+
+        return medico;
     }
 
     public Page<DadosListagemMedicoDTO> listarMedicos(Pageable paginacao) {
         return repository.findAllByAtivoTrue(paginacao).map(DadosListagemMedicoDTO::new);
     }
 
+    public Medico detalharMedico(Long id){
+        return buscaMedico(id);
+    }
+
     @Transactional
-    public void atualizarMedico(AtualizarMedicoDTO dados) {
-        Medico medico = repository.findById(dados.id())
-                .orElseThrow(() -> new IllegalArgumentException("Medico não encontrado."));
+    public Medico atualizarMedico(AtualizarMedicoDTO dados) {
+        Medico medico = buscaMedico(dados.id());
         validaDados(medico, dados);
         repository.save(medico);
+        return medico;
     }
 
     @Transactional
     public void excluirMedico(Long id) {
-        Medico medico = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Medico não encontrado."));
+        Medico medico = buscaMedico(id);
         medico.setAtivo(false);
     }
 
@@ -56,5 +62,9 @@ public class MedicoService {
         if(dados.endereco() != null){
             medico.setEndereco(new Endereco(dados.endereco()));
         }
+    }
+
+    private Medico buscaMedico(Long id){
+        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Medico não encontrado."));
     }
 }

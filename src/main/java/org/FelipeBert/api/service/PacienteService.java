@@ -11,8 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 public class PacienteService {
     private PacienteRepository repository;
@@ -22,8 +20,11 @@ public class PacienteService {
     }
 
     @Transactional
-    public void cadastrarPaciente(CadastrarPacienteDTO dadosPaciente) {
-        repository.save(new Paciente(dadosPaciente));
+    public Paciente cadastrarPaciente(CadastrarPacienteDTO dadosPaciente) {
+        var paciente = new Paciente(dadosPaciente);
+        repository.save(paciente);
+
+        return paciente;
     }
 
     public Page<DadosListagemPacienteDTO> listarPacientes(Pageable pageable) {
@@ -31,18 +32,18 @@ public class PacienteService {
     }
 
     @Transactional
-    public void atualizarPaciente(AtualizarPacienteDTO dadosPaciente) {
-        Paciente paciente = repository.findById(dadosPaciente.id())
-                .orElseThrow(() -> new IllegalArgumentException("Paciente não encontrado."));
+    public Paciente atualizarPaciente(AtualizarPacienteDTO dadosPaciente) {
+        Paciente paciente = buscarPaciente(dadosPaciente.id());
 
         validaDados(paciente, dadosPaciente);
         repository.save(paciente);
+
+        return paciente;
     }
 
     @Transactional
     public void excluirPaciente(Long id){
-        Paciente paciente = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Paciente não encontrado."));
+        Paciente paciente = buscarPaciente(id);
         paciente.setAtivo(false);
     }
 
@@ -56,5 +57,13 @@ public class PacienteService {
         if(dadosPaciente.telefone() != null && !dadosPaciente.telefone().isEmpty()){
             paciente.setTelefone(dadosPaciente.telefone());
         }
+    }
+
+    public Paciente detalharPaciente(Long id) {
+        return buscarPaciente(id);
+    }
+
+    private Paciente buscarPaciente(Long id){
+        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Paciente não Encontrado!"));
     }
 }
