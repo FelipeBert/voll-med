@@ -1,10 +1,10 @@
 package org.FelipeBert.api.controller;
 
 import jakarta.validation.Valid;
-import org.FelipeBert.api.dto.AtualizarPacienteDTO;
-import org.FelipeBert.api.dto.CadastrarPacienteDTO;
-import org.FelipeBert.api.dto.DadosListagemPacienteDTO;
-import org.FelipeBert.api.service.PacienteService;
+import org.FelipeBert.api.domain.dto.in.AtualizarPacienteDTO;
+import org.FelipeBert.api.domain.dto.in.CadastrarPacienteDTO;
+import org.FelipeBert.api.domain.dto.out.DadosListagemPacienteDTO;
+import org.FelipeBert.api.domain.service.PacienteService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;

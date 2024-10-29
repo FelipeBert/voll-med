@@ -1,10 +1,10 @@
 package org.FelipeBert.api.controller;
 
 import jakarta.validation.Valid;
-import org.FelipeBert.api.dto.CadastrarConsultaDTO;
-import org.FelipeBert.api.dto.CancelarConsultaDTO;
-import org.FelipeBert.api.dto.DadosConsultaDTO;
-import org.FelipeBert.api.service.ConsultaService;
+import org.FelipeBert.api.domain.dto.in.CadastrarConsultaDTO;
+import org.FelipeBert.api.domain.dto.in.CancelarConsultaDTO;
+import org.FelipeBert.api.domain.dto.out.DadosConsultaDTO;
+import org.FelipeBert.api.domain.service.ConsultaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,7 +31,7 @@ public class ConsultaController {
     @PutMapping
     public ResponseEntity cancelarConsulta(@RequestBody  @Valid CancelarConsultaDTO dadosCancelamento){
         var consulta =  service.cancelarConsulta(dadosCancelamento);
-        
+
         return ResponseEntity.ok(new DadosConsultaDTO(consulta));
     }
 
