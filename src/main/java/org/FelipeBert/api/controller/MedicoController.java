@@ -1,5 +1,6 @@
 package org.FelipeBert.api.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.FelipeBert.api.domain.dto.in.AtualizarMedicoDTO;
 import org.FelipeBert.api.domain.dto.in.CadastroMedicoDTO;
@@ -15,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/medicos")
+@SecurityRequirement(name = "bearer-key")
 public class MedicoController {
 
     private MedicoService service;

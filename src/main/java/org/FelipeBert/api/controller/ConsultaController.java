@@ -1,5 +1,7 @@
 package org.FelipeBert.api.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.FelipeBert.api.domain.dto.in.CadastrarConsultaDTO;
 import org.FelipeBert.api.domain.dto.in.CancelarConsultaDTO;
@@ -11,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/consultas")
+@SecurityRequirement(name = "bearer-key")
 public class ConsultaController {
 
     private ConsultaService service;
