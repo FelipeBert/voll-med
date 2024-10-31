@@ -1,5 +1,6 @@
 package org.FelipeBert.api.domain.dto.out;
 
+import org.FelipeBert.api.domain.dto.in.EnderecoDTO;
 import org.FelipeBert.api.domain.model.Endereco;
 import org.FelipeBert.api.domain.model.Especialidade;
 import org.FelipeBert.api.domain.model.Medico;
@@ -10,9 +11,9 @@ public record DadosDetalhamentoMedicoDTO(
         String email,
         String crm,
         Especialidade especialidade,
-        Endereco endereco) {
+        EnderecoDTO endereco) {
 
     public DadosDetalhamentoMedicoDTO(Medico medico){
-        this(medico.getId(), medico.getNome(), medico.getEmail(), medico.getCrm(), medico.getEspecialidade(), medico.getEndereco());
+        this(medico.getId(), medico.getNome(), medico.getEmail(), medico.getCrm(), medico.getEspecialidade(), new EnderecoDTO(medico.getEndereco()));
     }
 }
