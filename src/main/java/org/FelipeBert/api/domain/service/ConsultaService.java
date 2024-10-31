@@ -6,17 +6,15 @@ import org.FelipeBert.api.domain.dto.in.CancelarConsultaDTO;
 import org.FelipeBert.api.domain.model.Consulta;
 import org.FelipeBert.api.domain.model.Medico;
 import org.FelipeBert.api.domain.model.Paciente;
+import org.FelipeBert.api.domain.validacoes.ValidadorAgendamentoDeConsulta;
 import org.FelipeBert.api.infra.repository.ConsultaRepository;
 import org.FelipeBert.api.infra.repository.MedicoRepository;
 import org.FelipeBert.api.infra.repository.PacienteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class ConsultaService {
@@ -27,45 +25,34 @@ public class ConsultaService {
 
     private ConsultaRepository consultaRepository;
 
-    public ConsultaService(PacienteRepository pacienteRepository, MedicoRepository medicoRepository, ConsultaRepository consultaRepository) {
+    private List<ValidadorAgendamentoDeConsulta> validadores;
+
+    public ConsultaService(PacienteRepository pacienteRepository, MedicoRepository medicoRepository,
+                           ConsultaRepository consultaRepository, List<ValidadorAgendamentoDeConsulta> validadores) {
         this.pacienteRepository = pacienteRepository;
         this.medicoRepository = medicoRepository;
         this.consultaRepository = consultaRepository;
+        this.validadores = validadores;
     }
 
-    private static final LocalTime CLINICA_ABERTURA = LocalTime.of(7, 0);
-    private static final LocalTime CLINICA_FECHAMENTO = LocalTime.of(19, 0);
-
-    public Consulta agendarConsulta(CadastrarConsultaDTO dto) {
-        Paciente paciente = pacienteRepository.findById(dto.idPaciente())
+    @Transactional
+    public Consulta agendarConsulta(CadastrarConsultaDTO dados) {
+        Paciente paciente = pacienteRepository.findById(dados.idPaciente())
                 .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado."));
 
-        if (!paciente.isAtivo()) {
-            throw new IllegalArgumentException("Não é possível agendar consultas para pacientes inativos.");
+        if(dados.idMedico() != null && !medicoRepository.existsById(dados.idMedico())){
+            throw new EntityNotFoundException("Medico não encontrado!");
         }
 
-        LocalDateTime dataHoraConsulta = dto.hora();
-        validarDataHoraConsulta(dataHoraConsulta);
-        validarConsultaPacienteDia(paciente, dataHoraConsulta.toLocalDate().atStartOfDay());
+        Medico medico = escolherMedico(dados);
 
-        Medico medico;
-        if (dto.idMedico() != null) {
-            medico = medicoRepository.findById(dto.idMedico())
-                    .orElseThrow(() -> new EntityNotFoundException("Médico não encontrado."));
-            if (!medico.isAtivo()) {
-                throw new IllegalArgumentException("Não é possível agendar consultas com médicos inativos.");
-            }
-        } else {
-            medico = selecionarMedicoAleatorioDisponivel(dataHoraConsulta);
-        }
-
-        validarDisponibilidadeMedico(medico, dataHoraConsulta);
+        validadores.forEach(v -> v.validar(dados));
 
         Consulta consulta = new Consulta();
         consulta.setPaciente(paciente);
         consulta.setMedico(medico);
-        consulta.setData(dataHoraConsulta.toLocalDate());
-        consulta.setHora(dataHoraConsulta.toLocalTime());
+        consulta.setData(dados.hora().toLocalDate());
+        consulta.setHora(dados.hora().toLocalTime());
         consulta.setMarcada(true);
 
         return consultaRepository.save(consulta);
@@ -84,44 +71,19 @@ public class ConsultaService {
         return null;
     }
 
-    private void validarDataHoraConsulta(LocalDateTime dataHora) {
-        if (dataHora.isBefore(LocalDateTime.now().plusMinutes(30))) {
-            throw new IllegalArgumentException("Consultas devem ser agendadas com no mínimo 30 minutos de antecedência.");
-        }
-
-        if (dataHora.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            throw new IllegalArgumentException("A clínica não funciona aos domingos.");
-        }
-
-        LocalTime hora = dataHora.toLocalTime();
-        if (hora.isBefore(CLINICA_ABERTURA) || hora.isAfter(CLINICA_FECHAMENTO.minusMinutes(1))) {
-            throw new IllegalArgumentException("A clínica funciona das 07:00 às 19:00.");
-        }
-    }
-
-    private void validarConsultaPacienteDia(Paciente paciente, LocalDateTime data) {
-        boolean jaTemConsulta = consultaRepository.existsByPacienteAndData(paciente, data.toLocalDate());
-        if (jaTemConsulta) {
-            throw new IllegalArgumentException("O paciente já possui uma consulta agendada para este dia.");
-        }
-    }
-
-    private Medico selecionarMedicoAleatorioDisponivel(LocalDateTime dataHora) {
-        List<Medico> medicosDisponiveis = medicoRepository.findDisponiveisByDataHora(dataHora);
-        if (medicosDisponiveis.isEmpty()) {
-            throw new IllegalArgumentException("Não há médicos disponíveis para o horário selecionado.");
-        }
-        return medicosDisponiveis.get(new Random().nextInt(medicosDisponiveis.size()));
-    }
-
-    private void validarDisponibilidadeMedico(Medico medico, LocalDateTime dataHora) {
-        boolean medicoOcupado = consultaRepository.existsByMedicoAndDataAndHora(medico, dataHora.toLocalDate(), dataHora.toLocalTime());
-        if (medicoOcupado) {
-            throw new IllegalArgumentException("O médico já possui outra consulta agendada para este horário.");
-        }
-    }
-
     public Consulta detalharConsulta(Long id) {
         return consultaRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Consulta não Encontrada!"));
+    }
+
+    private Medico escolherMedico(CadastrarConsultaDTO dados) {
+        if (dados.idMedico() != null) {
+            return medicoRepository.getReferenceById(dados.idMedico());
+        }
+
+        if (dados.especialidade() == null) {
+            throw new IllegalArgumentException("Especialidade é obrigatória quando médico não for escolhido!");
+        }
+
+        return medicoRepository.escolherMedicoPorEspecialidadeEDataHora(dados.hora().toLocalDate(), dados.hora().toLocalTime(), dados.especialidade());
     }
 }
