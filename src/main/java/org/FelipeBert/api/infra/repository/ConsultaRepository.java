@@ -11,7 +11,9 @@ import java.time.LocalTime;
 
 @Repository
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
-    boolean existsByMedicoAndDataAndHora(Medico medico, LocalDate localDate, LocalTime localTime);
+    boolean existsByMedicoIdAndDataAndHora(Long id, LocalDate localDate, LocalTime localTime);
 
     boolean existsByPacienteAndData(Paciente paciente, LocalDate localDate);
+
+    boolean existsByPacienteIdAndData(Long aLong, LocalDate localDate);
 }
