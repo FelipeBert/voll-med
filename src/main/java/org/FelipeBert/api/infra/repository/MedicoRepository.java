@@ -9,16 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
 
 @Repository
 public interface MedicoRepository extends JpaRepository<Medico, Long> {
     Page<Medico> findAllByAtivoTrue(Pageable paginacao);
-
-    @Query("SELECT m FROM Medico m WHERE m.dataHora = :dataHora")
-    List<Medico> findDisponiveisByDataHora(LocalDateTime dataHora);
 
     @Query("""
             select m from Medico m
