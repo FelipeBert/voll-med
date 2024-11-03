@@ -1,6 +1,7 @@
 package org.FelipeBert.api.infra.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +24,12 @@ public class TratadorDeErros {
     public ResponseEntity tratarErro400(MethodArgumentNotValidException exception){
         var erros = exception.getFieldErrors();
         return ResponseEntity.badRequest().body(erros.stream().map(DadosErroValidacao::new).toList());
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity tratarErroNullPoint(NullPointerException exception){
+        var erros = exception.getMessage();
+        return ResponseEntity.badRequest().build();
     }
 
     @ExceptionHandler(BadCredentialsException.class)
